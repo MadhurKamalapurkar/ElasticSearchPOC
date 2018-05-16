@@ -27,11 +27,19 @@ public class SearchHandler implements RequestStreamHandler {
     // Removed URL for safety purpose
     private static final String URL = "";
 
+    @SuppressWarnings({ "unchecked", "unused" })
     @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
         JSONObject response = new JSONObject();
         String q = "";
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        
+        if (reader == null) {
+            response.put("statusCode", 500);
+            response.put("body", "Internal error");
+            context.getLogger().log("Reader is null");
+        }
+        
         try {
             JSONObject event = (JSONObject) parser.parse(reader);
             context.getLogger().log("query params: " + event.get("queryStringParameters"));
@@ -60,6 +68,7 @@ public class SearchHandler implements RequestStreamHandler {
         writer.close();
     }
 
+    @SuppressWarnings({ "unchecked", "deprecation" })
     public JSONObject callES(final String query) throws ParseException, IOException {
         HttpClient httpClient = new DefaultHttpClient();
         JSONObject responseJson = new JSONObject();
@@ -71,7 +80,21 @@ public class SearchHandler implements RequestStreamHandler {
         StringEntity stringEntity = new StringEntity(body);
         httpPost.setEntity(stringEntity);
         HttpResponse httpResponse = httpClient.execute(httpPost);
+        
+        if (httpResponse == null) {
+            responseJson.put("body", "No response from origin");
+            responseJson.put("statusCode", 500);
+            return responseJson;
+        }
+        
         HttpEntity entity = httpResponse.getEntity();
+        
+        if (entity == null) {
+            responseJson.put("body", "No content from origin");
+            responseJson.put("statusCode", 500);
+            return responseJson;
+        }
+        
         responseString = EntityUtils.toString(entity, "UTF-8");
         responseJson.put("body", responseString);
         responseJson.put("statusCode", httpResponse.getStatusLine().getStatusCode());

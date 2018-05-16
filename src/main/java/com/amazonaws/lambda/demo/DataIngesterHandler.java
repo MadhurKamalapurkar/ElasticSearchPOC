@@ -41,13 +41,28 @@ public class DataIngesterHandler implements RequestHandler<S3Event, String> {
     public String handleRequest(S3Event event, Context context) {
         context.getLogger().log("Received event: " + event);
 
+        if (event == null || context == null) {
+            return "Fail: Error in event";
+        }
         // Get the object from the event and show its content type
         String bucket = event.getRecords().get(0).getS3().getBucket().getName();
         String key = event.getRecords().get(0).getS3().getObject().getKey();
+        
         factory.setHttpClientConfig(new HttpClientConfig.Builder(URL).multiThreaded(true).build());
         JestClient client = factory.getObject();
+        
+        if (client == null) {
+            return "Fail: Cannot connect to the URL provided";
+        }
+        
         S3Object response = s3.getObject(new GetObjectRequest(bucket, key));
+        
+        if (response == null) {
+            return "Fail: Cannot get the S3 object";
+        }
+        
         InputStream input = response.getObjectContent();
+        
         // Read data from CSV file
         List<Object> readAll = new ArrayList<>();
         try {
@@ -55,10 +70,16 @@ public class DataIngesterHandler implements RequestHandler<S3Event, String> {
             CsvMapper csvMapper = new CsvMapper();
             readAll = csvMapper.readerFor(Map.class).with(csvSchema).readValues(input).readAll();
 
-            List<Index> indexes = new ArrayList<Index>();
+            if (readAll == null) {
+                return "Fail: No records in CSV";
+            }
+            
+            // for async process
+            //List<Index> indexes = new ArrayList<Index>();
             readAll.parallelStream().forEach(object -> {
                 try {
-                    indexes.add(new Index.Builder(mapper.writeValueAsString(object)).build());
+                    // fpr async process
+                    //indexes.add(new Index.Builder(mapper.writeValueAsString(object)).build());
                     Index index = new Index.Builder(mapper.writeValueAsString(object)).index("report").type("sales")
                             .build();
                     client.execute(index);
