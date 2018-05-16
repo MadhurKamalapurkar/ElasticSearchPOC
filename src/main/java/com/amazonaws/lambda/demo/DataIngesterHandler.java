@@ -23,22 +23,22 @@ import io.searchbox.core.Index;
 
 public class DataIngesterHandler implements RequestHandler<S3Event, String> {
 
-    private AmazonS3 s3 = AmazonS3ClientBuilder.standard().build();
-    private ObjectMapper mapper = new ObjectMapper();
-    private JestClientFactory factory = new JestClientFactory();
-    // Removed URL for safety purpose
-    private static final String URL = "";
+	private AmazonS3 s3 = AmazonS3ClientBuilder.standard().build();
+	private ObjectMapper mapper = new ObjectMapper();
+	private JestClientFactory factory = new JestClientFactory();
+	// Removed URL for safety purpose
+	private static final String URL = "";
 
+	public DataIngesterHandler() {
+	}
 
-    public DataIngesterHandler() {}
+	// Test purpose only.
+	DataIngesterHandler(AmazonS3 s3) {
+		this.s3 = s3;
+	}
 
-    // Test purpose only.
-    DataIngesterHandler(AmazonS3 s3) {
-        this.s3 = s3;
-    }
-
-    @Override
-    public String handleRequest(S3Event event, Context context) {
+	@Override
+	public String handleRequest(S3Event event, Context context) {
 		context.getLogger().log("Received event: " + event);
 
 		// Get the object from the event and show its content type
@@ -73,7 +73,7 @@ public class DataIngesterHandler implements RequestHandler<S3Event, String> {
 		} catch (Exception e) {
 			e.printStackTrace();
 			context.getLogger().log(e.getMessage());
-			return "Fail: "+e.getMessage();
+			return "Fail: " + e.getMessage();
 		} finally {
 			if (client != null) {
 				try {
@@ -81,14 +81,14 @@ public class DataIngesterHandler implements RequestHandler<S3Event, String> {
 				} catch (Exception e) {
 					e.printStackTrace();
 					context.getLogger().log(e.getMessage());
-					return "Fail: "+e.getMessage();
+					return "Fail: " + e.getMessage();
 				}
 
 			}
 		}
-    }
-    
-    /*
+	}
+	
+	/*
      * Asynchronous code, cannot be included since lambda is not active once the session is killed
     if (client == null) {
     	System.out.println("Client is null");
@@ -109,4 +109,5 @@ public class DataIngesterHandler implements RequestHandler<S3Event, String> {
 		});
     }
     */
+
 }

@@ -28,28 +28,25 @@ public class SearchHandler implements RequestStreamHandler {
 	private static final String URL = "";
 
 	@Override
-	public void handleRequest(
-			InputStream inputStream, 
-			OutputStream outputStream, 
-			Context context) throws IOException {
+	public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
 		JSONObject response = new JSONObject();
 		String q = "";
 		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        try {
-            JSONObject event = (JSONObject)parser.parse(reader);
-            context.getLogger().log("query params: "+event.get("queryStringParameters"));
-            if (event.get("queryStringParameters") != null) {
-                JSONObject qps = (JSONObject)event.get("queryStringParameters");
-                if ( qps.get("q") != null) {
-                    q = (String)qps.get("q");
-                }
-            }
+		try {
+			JSONObject event = (JSONObject) parser.parse(reader);
+			context.getLogger().log("query params: " + event.get("queryStringParameters"));
+			if (event.get("queryStringParameters") != null) {
+				JSONObject qps = (JSONObject) event.get("queryStringParameters");
+				if (qps.get("q") != null) {
+					q = (String) qps.get("q");
+				}
+			}
 
-            context.getLogger().log("query param: "+q);
-            response = callES(q);
-            
-        } catch (org.json.simple.parser.ParseException e) {
-        	response.put("statusCode", 500);
+			context.getLogger().log("query param: " + q);
+			response = callES(q);
+
+		} catch (org.json.simple.parser.ParseException e) {
+			response.put("statusCode", 500);
 			response.put("body", e.getMessage());
 			context.getLogger().log(e.getMessage());
 		} catch (Exception e) {
@@ -57,12 +54,12 @@ public class SearchHandler implements RequestStreamHandler {
 			response.put("body", e.getMessage());
 			context.getLogger().log(e.getMessage());
 		}
-        
-        OutputStreamWriter writer = new OutputStreamWriter(outputStream, "UTF-8");
-        writer.write(response.toJSONString());  
-        writer.close();
+
+		OutputStreamWriter writer = new OutputStreamWriter(outputStream, "UTF-8");
+		writer.write(response.toJSONString());
+		writer.close();
 	}
-	
+
 	public JSONObject callES(final String query) throws ParseException, IOException {
 		HttpClient httpClient = new DefaultHttpClient();
 		JSONObject responseJson = new JSONObject();
