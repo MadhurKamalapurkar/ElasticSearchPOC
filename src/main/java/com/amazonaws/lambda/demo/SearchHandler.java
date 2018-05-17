@@ -24,8 +24,13 @@ import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 
 public class SearchHandler implements RequestStreamHandler {
     private JSONParser parser = new JSONParser();
+    private HttpClient httpClient = new DefaultHttpClient();
     // Removed URL for safety purpose
     private static final String URL = "";
+    
+    public SearchHandler(JSONParser parser, HttpClient httpClient) {
+        this.parser = parser;
+    }
 
     @SuppressWarnings({ "unchecked", "unused" })
     @Override
@@ -70,7 +75,6 @@ public class SearchHandler implements RequestStreamHandler {
 
     @SuppressWarnings({ "unchecked", "deprecation" })
     public JSONObject callES(final String query) throws ParseException, IOException {
-        HttpClient httpClient = new DefaultHttpClient();
         JSONObject responseJson = new JSONObject();
         String responseString = "";
         HttpPost httpPost = new HttpPost(URL);

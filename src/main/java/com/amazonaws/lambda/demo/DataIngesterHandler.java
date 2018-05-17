@@ -23,27 +23,33 @@ import io.searchbox.core.Index;
 
 public class DataIngesterHandler implements RequestHandler<S3Event, String> {
 
-    private AmazonS3 s3 = AmazonS3ClientBuilder.standard().build();
+    private AmazonS3 s3;
     private ObjectMapper mapper = new ObjectMapper();
     private JestClientFactory factory = new JestClientFactory();
+    private CsvMapper csvMapper = new CsvMapper();
     // Removed URL for safety purpose
     private static final String URL = "";
 
     public DataIngesterHandler() {
+        s3 = AmazonS3ClientBuilder.standard().build();
     }
 
     // Test purpose only.
-    DataIngesterHandler(AmazonS3 s3) {
+    DataIngesterHandler(AmazonS3 s3, JestClientFactory factory, CsvMapper csvMapper) {
         this.s3 = s3;
+        this.factory = factory;
+        this.csvMapper = csvMapper;
     }
 
     @Override
     public String handleRequest(S3Event event, Context context) {
-        context.getLogger().log("Received event: " + event);
-
+        
         if (event == null || context == null) {
             return "Fail: Error in event";
         }
+        
+        context.getLogger().log("Received event: " + event);
+
         // Get the object from the event and show its content type
         String bucket = event.getRecords().get(0).getS3().getBucket().getName();
         String key = event.getRecords().get(0).getS3().getObject().getKey();
@@ -67,7 +73,6 @@ public class DataIngesterHandler implements RequestHandler<S3Event, String> {
         List<Object> readAll = new ArrayList<>();
         try {
             CsvSchema csvSchema = CsvSchema.builder().setUseHeader(true).build();
-            CsvMapper csvMapper = new CsvMapper();
             readAll = csvMapper.readerFor(Map.class).with(csvSchema).readValues(input).readAll();
 
             if (readAll == null) {
